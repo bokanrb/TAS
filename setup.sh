@@ -2,13 +2,14 @@
 #
 # TAS environment setup for macOS and Linux.
 # Installs the recon tools and the wordlists. After it finishes you run each
-# tool directly (subfinder, httpx, nuclei, ...). This script installs nothing
-# that touches a target.
+# tool directly (subfinder, httpx, nuclei, ...). Installs nothing that touches
+# a target.
 #
 # Usage:
 #   ./setup.sh            install tools and wordlists
 #   ./setup.sh --tools    tools only
 #   ./setup.sh --words    wordlists only
+#   ./setup.sh -y         assume yes to prerequisite install prompts
 #
 set -u
 
@@ -20,34 +21,108 @@ mkdir -p "$BIN_DIR"
 
 DO_TOOLS=1
 DO_WORDS=1
-case "${1:-}" in
-  --tools) DO_WORDS=0 ;;
-  --words) DO_TOOLS=0 ;;
-esac
+ASSUME_YES=0
+for a in "$@"; do
+  case "$a" in
+    --tools) DO_WORDS=0 ;;
+    --words) DO_TOOLS=0 ;;
+    -y|--yes) ASSUME_YES=1 ;;
+  esac
+done
 
 say()  { printf '\n[*] %s\n' "$1"; }
 ok()   { printf '  [OK] %s\n' "$1"; }
 no()   { printf '  [--] %s\n' "$1"; }
 have() { command -v "$1" >/dev/null 2>&1; }
 
-GOBIN="$(go env GOBIN 2>/dev/null)"
-[ -z "${GOBIN:-}" ] && GOBIN="$(go env GOPATH 2>/dev/null)/bin"
+# make freshly installed user-space binaries visible within this run
+export PATH="$BIN_DIR:$PATH"
+
+# sudo only when needed and available
+SUDO=""
+[ "$(id -u)" -ne 0 ] && have sudo && SUDO="sudo"
+
+# detect a package manager
+PKG=""
+if [ "$OS" = "Darwin" ]; then have brew && PKG="brew"
+elif have apt-get; then PKG="apt"
+elif have dnf; then PKG="dnf"
+elif have pacman; then PKG="pacman"
+fi
+
+ask() {  # prompt, returns 0 for yes
+  [ "$ASSUME_YES" = 1 ] && return 0
+  [ -t 0 ] || return 1           # non-interactive, do not assume yes
+  printf '      %s [y/N] ' "$1"
+  read -r ans
+  case "$ans" in [yY]|[yY][eE][sS]) return 0 ;; *) return 1 ;; esac
+}
+
+pkg_name() {  # manager generic -> package name(s)
+  case "$1" in
+    brew)   case "$2" in go) echo go;; python3) echo python3;; pipx) echo pipx;; git) echo git;; curl) echo curl;; esac ;;
+    apt)    case "$2" in go) echo golang-go;; python3) echo "python3 python3-pip python3-venv";; pipx) echo pipx;; git) echo git;; curl) echo curl;; esac ;;
+    dnf)    case "$2" in go) echo golang;; python3) echo "python3 python3-pip";; pipx) echo pipx;; git) echo git;; curl) echo curl;; esac ;;
+    pacman) case "$2" in go) echo go;; python3) echo "python python-pip";; pipx) echo python-pipx;; git) echo git;; curl) echo curl;; esac ;;
+  esac
+}
+
+pkg_install() {  # generic name
+  local p; p="$(pkg_name "$PKG" "$1")"
+  if [ -z "$p" ]; then no "no package mapping for $1 with $PKG"; return 1; fi
+  printf '      installing %s via %s\n' "$1" "$PKG"
+  case "$PKG" in
+    brew)   brew install $p ;;
+    apt)    $SUDO apt-get update -y && $SUDO apt-get install -y $p ;;
+    dnf)    $SUDO dnf install -y $p ;;
+    pacman) $SUDO pacman -S --noconfirm $p ;;
+    *) return 1 ;;
+  esac
+}
+
+require() {  # cmd  why
+  local cmd="$1" why="$2"
+  if have "$cmd"; then ok "$cmd present"; return 0; fi
+  no "$cmd not found. $why"
+  # pipx has a reliable pip fallback that needs no package manager
+  if [ "$cmd" = pipx ] && have python3; then
+    if ask "Install pipx now?"; then
+      python3 -m pip install --user pipx >/dev/null 2>&1 && python3 -m pipx ensurepath >/dev/null 2>&1
+      have pipx && { ok "pipx installed"; return 0; }
+    fi
+  fi
+  if [ -z "$PKG" ]; then no "no package manager detected, install $cmd manually"; return 1; fi
+  if ask "Install $cmd now via $PKG?"; then
+    pkg_install "$cmd" && have "$cmd" && { ok "$cmd installed"; return 0; }
+    no "$cmd install failed"
+    return 1
+  fi
+  no "skipped $cmd"
+  return 1
+}
 
 # ---------------------------------------------------------------- preflight --
-say "Preflight"
-have go      && ok "go $(go version | awk '{print $3}')" || no "go not found. Install from https://go.dev/dl (needed for most tools)"
-have git     && ok "git present" || no "git not found. Install git"
-have python3 && ok "python3 $(python3 -V 2>&1 | awk '{print $2}')" || no "python3 not found (needed for arjun, wafw00f, s3scanner, cloud_enum)"
-have pipx    && ok "pipx present" || no "pipx not found. Falling back to pip --user (brew install pipx, or python3 -m pip install --user pipx)"
+say "Preflight (checks requirements, offers to install missing ones)"
+[ -n "$PKG" ] && ok "package manager: $PKG" || no "no package manager detected (brew/apt/dnf/pacman). Missing tools must be installed by hand"
+require curl    "needed to download wordlists and installers"
+require git     "needed by some installs and updates"
+require go      "needed to build subfinder, httpx, nuclei and the rest of the Go tools"
+require python3 "needed for arjun, wafw00f, s3scanner, cloud_enum"
+require pipx    "isolated installs of the Python tools (pip --user is the fallback)"
+
+# recompute Go bin dir now that Go may have just been installed
+GOBIN="$(go env GOBIN 2>/dev/null)"
+[ -z "${GOBIN:-}" ] && GOBIN="$(go env GOPATH 2>/dev/null)/bin"
+[ -n "$GOBIN" ] && export PATH="$GOBIN:$PATH"
 case ":$PATH:" in *":$BIN_DIR:"*) ok "$BIN_DIR on PATH" ;; *) no "$BIN_DIR not on PATH (see end of run)" ;; esac
-case ":$PATH:" in *":$GOBIN:"*) ok "$GOBIN on PATH" ;; *) no "$GOBIN not on PATH (see end of run)" ;; esac
+[ -n "$GOBIN" ] && { case ":$PATH:" in *":$GOBIN:"*) ok "$GOBIN on PATH" ;; *) no "$GOBIN not on PATH (see end of run)" ;; esac; }
 
 # ------------------------------------------------------------------ go tools -
 goget() {  # name  package
   if have "$1"; then ok "$1 already installed"; return; fi
   if have go; then
     printf '  installing %s\n' "$1"
-    if GOBIN="$GOBIN" go install "$2" >/dev/null 2>&1; then ok "$1"; else no "$1 go install failed"; fi
+    if GOBIN="$GOBIN" go install "$2" >/dev/null 2>&1; then ok "$1"; else no "$1 go install failed (is Go 1.21+? distro Go can be too old, see https://go.dev/dl)"; fi
   else
     no "$1 skipped (go missing)"
   fi

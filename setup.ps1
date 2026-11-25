@@ -7,8 +7,9 @@
 #   powershell -ExecutionPolicy Bypass -File setup.ps1
 #   ... -Tools        tools only
 #   ... -Words        wordlists only
+#   ... -Yes          assume yes to prerequisite install prompts
 
-param([switch]$Tools, [switch]$Words)
+param([switch]$Tools, [switch]$Words, [switch]$Yes)
 
 $ErrorActionPreference = "Continue"
 $RepoDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -24,15 +25,71 @@ function OK($m)  { Write-Host "  [OK] $m" }
 function No($m)  { Write-Host "  [--] $m" }
 function Have($c) { return [bool](Get-Command $c -ErrorAction SilentlyContinue) }
 
-$GoBin = (& go env GOBIN 2>$null)
-if (-not $GoBin) { $GoBin = Join-Path (& go env GOPATH 2>$null) "bin" }
+function Refresh-Path {
+  $m = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
+  $u = [System.Environment]::GetEnvironmentVariable("Path", "User")
+  $env:PATH = "$m;$u;$BinDir"
+}
+Refresh-Path
+
+$PkgMgr = if (Have winget) { "winget" } elseif (Have choco) { "choco" } elseif (Have scoop) { "scoop" } else { "" }
+
+function Confirm-Install($msg) {
+  if ($Yes) { return $true }
+  $a = Read-Host "      $msg [y/N]"
+  return ($a -match '^(y|yes)$')
+}
+
+function Install-Pkg($generic) {
+  switch ($PkgMgr) {
+    "winget" {
+      $id = @{ go = "GoLang.Go"; python = "Python.Python.3.12"; git = "Git.Git" }[$generic]
+      if (-not $id) { No "no winget id for $generic"; return }
+      & winget install -e --id $id --accept-source-agreements --accept-package-agreements
+    }
+    "choco" {
+      $p = @{ go = "golang"; python = "python"; git = "git" }[$generic]
+      & choco install $p -y
+    }
+    "scoop" {
+      $p = @{ go = "go"; python = "python"; git = "git" }[$generic]
+      & scoop install $p
+    }
+    default { No "no package manager detected, install $generic manually" }
+  }
+  Refresh-Path
+}
+
+function Require($cmd, $generic, $why) {
+  if (Have $cmd) { OK "$cmd present"; return }
+  No "$cmd not found. $why"
+  if ($generic -eq "pipx" -and (Have python)) {
+    if (Confirm-Install "Install pipx now?") {
+      & python -m pip install --user pipx | Out-Null
+      & python -m pipx ensurepath 2>$null | Out-Null
+      Refresh-Path
+      if (Have pipx) { OK "pipx installed"; return }
+    }
+  }
+  if (-not $PkgMgr) { No "no package manager (winget/choco/scoop), install $cmd manually"; return }
+  if (Confirm-Install "Install $cmd now via $PkgMgr?") {
+    Install-Pkg $generic
+    if (Have $cmd) { OK "$cmd installed" } else { No "$cmd install failed (you may need to open a new shell)" }
+  }
+  else { No "skipped $cmd" }
+}
 
 # ---------------------------------------------------------------- preflight --
-Say "Preflight"
-if (Have go)     { OK ("go " + ((& go version) -split ' ')[2]) } else { No "go not found. Install from https://go.dev/dl (needed for most tools)" }
-if (Have git)    { OK "git present" } else { No "git not found. Install git" }
-if (Have python) { OK ("python " + ((& python -V) -split ' ')[1]) } else { No "python not found (needed for arjun, wafw00f, s3scanner, cloud_enum)" }
-if (Have pipx)   { OK "pipx present" } else { No "pipx not found. Falling back to pip --user (python -m pip install --user pipx)" }
+Say "Preflight (checks requirements, offers to install missing ones)"
+if ($PkgMgr) { OK "package manager: $PkgMgr" } else { No "no package manager detected (winget/choco/scoop). Missing tools must be installed by hand" }
+Require git    git    "needed by some installs and updates"
+Require go     go     "needed to build subfinder, httpx, nuclei and the rest of the Go tools"
+Require python python "needed for arjun, wafw00f, s3scanner, cloud_enum"
+Require pipx   pipx   "isolated installs of the Python tools (pip --user is the fallback)"
+
+$GoBin = (& go env GOBIN 2>$null)
+if (-not $GoBin) { $gp = (& go env GOPATH 2>$null); if ($gp) { $GoBin = Join-Path $gp "bin" } }
+if ($GoBin) { $env:PATH = "$GoBin;$env:PATH" }
 if ($env:PATH -split ';' -contains $BinDir) { OK "$BinDir on PATH" } else { No "$BinDir not on PATH (see end of run)" }
 if ($GoBin -and ($env:PATH -split ';' -contains $GoBin)) { OK "$GoBin on PATH" } else { No "$GoBin not on PATH (see end of run)" }
 
@@ -41,7 +98,7 @@ function Install-Release($name, $repo) {
   if (Have $name) { OK "$name already installed"; return }
   try {
     $rel = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest" -Headers @{ "User-Agent" = "tas-setup" }
-    $arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { @("arm64","aarch64") } else { @("amd64","x86_64") }
+    $arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { @("arm64", "aarch64") } else { @("amd64", "x86_64") }
     $asset = $rel.assets | Where-Object {
       $n = $_.name.ToLower()
       ($n -match "windows|win") -and ($arch | Where-Object { $n -match $_ }) -and ($n -match "\.zip$|\.tar\.gz$")

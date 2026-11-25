@@ -10,8 +10,10 @@ in one place.
 
 ## Prerequisites
 
-Install these first. The setup script checks for them and reports what is
-missing.
+The setup script checks for these at the start. If one is missing it offers to
+install it for you via your package manager (Homebrew, apt, dnf or pacman on
+macOS/Linux, winget, choco or scoop on Windows), then continues. Answer the
+prompt, or pass `-y` (macOS/Linux) / `-Yes` (Windows) to accept them all.
 
 | Requirement | Why |
 |---|---|
@@ -36,7 +38,7 @@ powershell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
 Scope flags: `--tools` / `-Tools` install tools only, `--words` / `-Words`
-install wordlists only.
+install wordlists only. Add `-y` / `-Yes` to auto-accept prerequisite installs.
 
 After install, make sure your Go bin dir (`~/go/bin` or
 `%USERPROFILE%\go\bin`) and `~/.local/bin` are on PATH, then check a few:
