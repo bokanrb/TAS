@@ -1,0 +1,21 @@
+# Example subfinder provider config. Copy to the real location and fill in keys.
+#   macOS / Linux:  ~/.config/subfinder/provider-config.yaml
+#   Windows:        %USERPROFILE%\.config\subfinder\provider-config.yaml
+#
+# Without keys, subfinder still uses its keyless sources. Keys add more.
+# Keep real keys out of git. See docs/API-KEYS.md.
+
+shodan:
+  - YOUR_SHODAN_KEY
+censys:
+  - YOUR_CENSYS_ID:YOUR_CENSYS_SECRET
+github:
+  - YOUR_GITHUB_PAT
+gitlab:
+  - YOUR_GITLAB_TOKEN
+virustotal:
+  - YOUR_VIRUSTOTAL_KEY
+securitytrails:
+  - YOUR_SECURITYTRAILS_KEY
+chaos:
+  - YOUR_CHAOS_KEY

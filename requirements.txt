@@ -1,3 +1,0 @@
-# Orchestrator dependency only. The recon tools themselves are installed
-# by install/install.py (Go/Rust/Python binaries on PATH), not imported here.
-PyYAML>=6.0

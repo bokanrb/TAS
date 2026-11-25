@@ -4,7 +4,9 @@ You do not need a custom script to query passive sources. subfinder and uncover 
 
 ## subfinder
 
-Edit `~/.config/subfinder/provider-config.yaml` (created on first run):
+A ready template is in `config/provider-config.example.yaml`. Copy it to
+`~/.config/subfinder/provider-config.yaml` (or the Windows path in the file)
+and fill in your keys:
 
 ```
 shodan: [KEY]

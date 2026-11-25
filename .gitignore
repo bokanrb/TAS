@@ -1,22 +1,19 @@
-# Run outputs. Treat as confidential. Never commit target data.
+# Scan output. Treat as confidential. Never commit target data.
 output/
 runs/
 *.log
 
-# Vendored third-party clones (installed as packages, not tracked here)
-install/vendor/
-
-# Local tool config holding API keys
+# Real API-key configs (keep the .example templates only)
 config/provider-config.yaml
 config/*.local.yaml
 .env
 
-# Python
+# Python caches
 __pycache__/
 *.pyc
 .venv/
 venv/
 
-# OS
+# OS cruft
 .DS_Store
 Thumbs.db
