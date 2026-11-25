@@ -23,6 +23,23 @@ dnsx -d example.com -w wordlists/dns/subdomains.txt -r wordlists/resolvers/resol
 dnsx -l subs.txt -a -cname -resp -r wordlists/resolvers/resolvers.txt -silent -j -o dns.jsonl
 ```
 
+## Hostnames from an IP
+
+```
+# purpose-built: PTR, TLS SAN/CN, SPF from each IP
+echo 1.2.3.4 | hakip2host
+
+# expand a CIDR to IPs first, then resolve hostnames
+echo 1.2.3.0/24 | mapcidr -silent | hakip2host
+
+# alternatives already in the kit
+echo 1.2.3.4 | dnsx -ptr -resp-only -silent      # reverse DNS only
+echo 1.2.3.4 | tlsx -san -cn -silent             # names from the TLS cert
+```
+
+Reverse lookups on a CDN or shared host return many unrelated domains, so
+confirm each is in scope. `cdncheck -l ips.txt -resp` flags CDN IPs first.
+
 ## HTTP probe and fingerprint
 
 ```

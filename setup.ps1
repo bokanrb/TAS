@@ -139,6 +139,8 @@ if ($DoTools) {
   GoGet uncover   "github.com/projectdiscovery/uncover/cmd/uncover@latest"
   GoGet ffuf      "github.com/ffuf/ffuf/v2@latest"
   GoGet jsluice   "github.com/BishopFox/jsluice/cmd/jsluice@latest"
+  GoGet mapcidr    "github.com/projectdiscovery/mapcidr/cmd/mapcidr@latest"
+  GoGet hakip2host "github.com/hakluke/hakip2host@latest"
 
   Say "trufflehog and feroxbuster"
   Install-Release "trufflehog" "trufflesecurity/trufflehog"

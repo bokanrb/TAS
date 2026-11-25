@@ -143,6 +143,8 @@ if [ "$DO_TOOLS" = 1 ]; then
   goget uncover   github.com/projectdiscovery/uncover/cmd/uncover@latest
   goget ffuf      github.com/ffuf/ffuf/v2@latest
   goget jsluice   github.com/BishopFox/jsluice/cmd/jsluice@latest
+  goget mapcidr    github.com/projectdiscovery/mapcidr/cmd/mapcidr@latest
+  goget hakip2host github.com/hakluke/hakip2host@latest
 
   # --- trufflehog and feroxbuster: brew on mac, official installer otherwise ---
   say "trufflehog and feroxbuster"

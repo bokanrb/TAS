@@ -55,6 +55,7 @@ nuclei -version
 |---|---|
 | Passive subdomains | subfinder |
 | Active DNS | dnsx, alterx |
+| Hostnames from an IP | hakip2host, mapcidr |
 | Port scan | naabu |
 | HTTP probe and fingerprint | httpx, tlsx, cdncheck, wafw00f |
 | Crawl and URLs | katana, urlfinder |
