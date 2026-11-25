@@ -1,0 +1,19 @@
+# Run outputs. Treat as confidential. Never commit target data.
+output/
+runs/
+*.log
+
+# Local tool config holding API keys
+config/provider-config.yaml
+config/*.local.yaml
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db

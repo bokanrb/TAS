@@ -1,0 +1,43 @@
+# TAS default configuration.
+# Rate defaults are a conservative starting point for a new target
+# (fewer than 5 threads, at least 0.5s delay). Loosen only when allowed.
+# Override any value per run with --threads / --delay / --rate.
+
+rate:
+  threads: 4          # concurrency for tools that take -t / -c / --threads
+  delay_ms: 500       # per request delay where supported
+  rate_limit: 5       # requests per second cap where supported (httpx, nuclei, dnsx)
+
+output_dir: output    # per run results land in output/<target>/<stage>/
+
+wordlists:
+  dns: wordlists/dns/subdomains.txt
+  content: wordlists/content/raft-medium-directories.txt
+  params: wordlists/params/parameters.txt
+  passwords: wordlists/passwords/rockyou.txt
+
+tools:
+  # Override only if a binary is named differently or you want extra flags.
+  # extra_args are appended verbatim to that tool's command.
+  subfinder:   {bin: subfinder,   extra_args: []}
+  dnsx:        {bin: dnsx,        extra_args: []}
+  alterx:      {bin: alterx,      extra_args: []}
+  naabu:       {bin: naabu,       extra_args: []}
+  httpx:       {bin: httpx,       extra_args: []}
+  tlsx:        {bin: tlsx,        extra_args: []}
+  cdncheck:    {bin: cdncheck,    extra_args: []}
+  wafw00f:     {bin: wafw00f,     extra_args: []}
+  katana:      {bin: katana,      extra_args: []}
+  urlfinder:   {bin: urlfinder,   extra_args: []}
+  jsluice:     {bin: jsluice,     extra_args: []}
+  trufflehog:  {bin: trufflehog,  extra_args: []}
+  feroxbuster: {bin: feroxbuster, extra_args: []}
+  arjun:       {bin: arjun,       extra_args: []}
+  ffuf:        {bin: ffuf,        extra_args: []}
+  nuclei:      {bin: nuclei,      extra_args: ["-duc", "-ni"]}  # no auto update check, no interactsh
+  cloud_enum:  {bin: cloud_enum,  extra_args: []}
+  s3scanner:   {bin: s3scanner,   extra_args: []}
+  uncover:     {bin: uncover,     extra_args: []}
+
+# Passive source API keys live in config/provider-config.yaml (git ignored).
+# subfinder and uncover read their own key files. See docs/API-KEYS.md.
