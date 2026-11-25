@@ -5,7 +5,7 @@ naabu throttling: -rate (packets/sec) and -c (concurrency). Connect scan
 Note: web targets are commonly limited to 80 and 443. Only widen ports when
 the target's rules allow it.
 """
-from ..common import run, tool_bin, tool_extra, read_lines, have, good, info, warn
+from ..common import run as run_tool, tool_bin, tool_extra, read_lines, have, good, info, warn
 
 NAME = "portscan"
 HELP = "port scan with throttle (naabu), optional nmap on open ports"
@@ -35,7 +35,7 @@ def run(ctx):
     else:
         cmd += ["-p", ports]
     cmd += tool_extra(ctx, "naabu")
-    if run(cmd) is not None:
+    if run_tool(cmd) is not None:
         ctx.set("ports", out)
         good(f"{NAME}: {len(read_lines(out))} open host:port -> {out}")
 
@@ -44,5 +44,5 @@ def run(ctx):
             warn("nmap not installed, skipping the service scan")
             return
         info(f"{NAME}: nmap -sV on discovered ports (slow)")
-        run(["nmap", "-sV", "--open", "-Pn", "-iL", out, "-oN", ctx.out(NAME, "nmap.txt")],
+        run_tool(["nmap", "-sV", "--open", "-Pn", "-iL", out, "-oN", ctx.out(NAME, "nmap.txt")],
             check_tool=False)

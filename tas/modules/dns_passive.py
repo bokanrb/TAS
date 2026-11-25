@@ -3,7 +3,7 @@
 Passive means third party data sources only. It does not touch the target.
 API keys (if configured in config/provider-config.yaml) add more sources.
 """
-from ..common import run, tool_bin, tool_extra, read_lines, good, info
+from ..common import run as run_tool, tool_bin, tool_extra, read_lines, good, info
 
 NAME = "dns_passive"
 HELP = "passive subdomain enumeration (subfinder)"
@@ -26,7 +26,7 @@ def run(ctx):
     else:
         cmd += ["-d", ctx.target]
     cmd += tool_extra(ctx, "subfinder")
-    rc = run(cmd)
+    rc = run_tool(cmd)
     if rc is not None:
         ctx.set("subdomains", out)
         good(f"{NAME}: {len(read_lines(out))} subdomains -> {out}")

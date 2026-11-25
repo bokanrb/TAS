@@ -1,11 +1,10 @@
 """Vulnerability scanning with nuclei (curated, throttled).
 
-Defaults are deliberately conservative: config appends -duc -ni (no auto-update
-check / no interactsh, both off the LP+ allowlist). Pick templates with
-Pick templates with --tags or --templates. A broad run is noisy and slow, so
-curate what you actually need.
+Defaults are deliberately conservative. Config appends -duc -ni (no auto update
+check, no interactsh). Pick templates with --tags or --templates. A broad run
+is noisy and slow, so curate what you actually need.
 """
-from ..common import run, tool_bin, tool_extra, read_lines, good, warn
+from ..common import run as run_tool, tool_bin, tool_extra, read_lines, good, warn
 
 NAME = "vulnscan"
 HELP = "template vuln scan (nuclei), curate your templates"
@@ -33,6 +32,6 @@ def run(ctx):
     if getattr(ctx.args, "templates", None):
         cmd += ["-t", ctx.args.templates]
     cmd += tool_extra(ctx, "nuclei")  # -duc -ni from config
-    if run(cmd) is not None:
+    if run_tool(cmd) is not None:
         ctx.set("vulns", out)
         good(f"{NAME}: {len(read_lines(out))} findings -> {out}")

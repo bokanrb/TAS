@@ -3,7 +3,7 @@
 katana crawls live sites (honours rate/depth). urlfinder pulls known URLs from
 archives/passive sources. Outputs a merged, de-duplicated URL list.
 """
-from ..common import run, tool_bin, tool_extra, read_lines, good
+from ..common import run as run_tool, tool_bin, tool_extra, read_lines, good
 
 NAME = "crawl"
 HELP = "crawl live sites + passive URLs (katana + urlfinder)"
@@ -29,10 +29,10 @@ def run(ctx):
     if getattr(ctx.args, "js_crawl", False):
         cmd.append("-jc")
     cmd += tool_extra(ctx, "katana")
-    run(cmd)
+    run_tool(cmd)
 
     if not getattr(ctx.args, "no_passive", False):
-        run([tool_bin(ctx, "urlfinder"), "-silent", "-list", src, "-o", uout]
+        run_tool([tool_bin(ctx, "urlfinder"), "-silent", "-list", src, "-o", uout]
             + tool_extra(ctx, "urlfinder"))
 
     merged = sorted(set(read_lines(kout)) | set(read_lines(uout)))

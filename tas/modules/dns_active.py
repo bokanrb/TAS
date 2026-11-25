@@ -5,7 +5,7 @@ Produces resolved live hostnames and a JSON of DNS records (incl. CNAMEs,
 which the takeover stage consumes).
 """
 import os
-from ..common import run, tool_bin, tool_extra, read_lines, good, warn, info
+from ..common import run as run_tool, tool_bin, tool_extra, read_lines, good, warn, info
 
 NAME = "dns_active"
 HELP = "active DNS bruteforce + resolution (dnsx + alterx)"
@@ -35,7 +35,7 @@ def run(ctx):
     # permutations of known subdomains
     if known and not getattr(ctx.args, "no_permute", False):
         perm = sd / "permutations.txt"
-        if run([tool_bin(ctx, "alterx"), "-silent", "-l", known, "-o", perm]) is not None:
+        if run_tool([tool_bin(ctx, "alterx"), "-silent", "-l", known, "-o", perm]) is not None:
             add(read_lines(perm))
 
     # wordlist bruteforce candidates: <word>.<target>
@@ -57,10 +57,10 @@ def run(ctx):
            "-rl", ctx.rate_limit, "-t", ctx.threads,
            "-a", "-cname", "-resp", "-j", "-o", recs]
     cmd += tool_extra(ctx, "dnsx")
-    if run(cmd) is not None:
+    if run_tool(cmd) is not None:
         # also a plain resolved host list
         plain = [tool_bin(ctx, "dnsx"), "-silent", "-l", candidates, "-rl", ctx.rate_limit, "-t", ctx.threads]
-        run(plain, stdout_to=resolved)
+        run_tool(plain, stdout_to=resolved)
         ctx.set("resolved", resolved)
         ctx.set("dns_records", recs)
         good(f"{NAME}: {len(read_lines(resolved))} resolved -> {resolved}")

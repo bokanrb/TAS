@@ -3,7 +3,7 @@
 Arjun finds hidden query/body params on endpoints. Throttle via --stable and
 its delay. Reads live URLs (or crawl output).
 """
-from ..common import run, tool_bin, tool_extra, read_lines, good, warn, info
+from ..common import run as run_tool, tool_bin, tool_extra, read_lines, good, warn, info
 
 NAME = "params"
 HELP = "hidden parameter discovery (arjun)"
@@ -25,7 +25,7 @@ def run(ctx):
     # Arjun delay is in seconds between requests
     cmd += ["-d", str(ctx.delay_ms / 1000)]
     cmd += tool_extra(ctx, "arjun")
-    if run(cmd) is not None:
+    if run_tool(cmd) is not None:
         ctx.set("params", out)
         good(f"{NAME}: parameters -> {out}")
     else:

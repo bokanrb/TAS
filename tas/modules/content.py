@@ -3,7 +3,7 @@
 Throttle: --threads and --rate-limit. Uses the content wordlist from config.
 Runs against each live URL (or the target).
 """
-from ..common import run, tool_bin, tool_extra, read_lines, good, warn
+from ..common import run as run_tool, tool_bin, tool_extra, read_lines, good, warn
 
 NAME = "content"
 HELP = "directory/content discovery (feroxbuster)"
@@ -31,7 +31,7 @@ def run(ctx):
     # feroxbuster takes repeated -u, or --stdin
     if len(targets) == 1:
         cmd += ["-u", targets[0]]
-        rc = run(cmd + tool_extra(ctx, "feroxbuster"))
+        rc = run_tool(cmd + tool_extra(ctx, "feroxbuster"))
     else:
         import subprocess, sys
         from ..common import have, info

@@ -5,7 +5,7 @@ validates and enumerates buckets. Only act on storage you are authorized to
 test.
 """
 import os
-from ..common import run, tool_bin, tool_extra, good, info, have, warn
+from ..common import run as run_tool, tool_bin, tool_extra, good, info, have, warn
 
 NAME = "cloud"
 HELP = "cloud asset + bucket discovery (cloud_enum + s3scanner)"
@@ -25,7 +25,7 @@ def run(ctx):
 
     if have(tool_bin(ctx, "cloud_enum")):
         out = ctx.out(NAME, "cloud_enum.txt")
-        run([tool_bin(ctx, "cloud_enum"), "-k", base, "-k", kw, "-l", out]
+        run_tool([tool_bin(ctx, "cloud_enum"), "-k", base, "-k", kw, "-l", out]
             + tool_extra(ctx, "cloud_enum"))
         ctx.set("cloud_assets", out)
         good(f"{NAME}: cloud_enum -> {out}")
@@ -34,6 +34,6 @@ def run(ctx):
 
     if have(tool_bin(ctx, "s3scanner")):
         out = ctx.out(NAME, "s3scanner.txt")
-        run([tool_bin(ctx, "s3scanner"), "scan", "-bucket", base,
+        run_tool([tool_bin(ctx, "s3scanner"), "scan", "-bucket", base,
              "--json"] + tool_extra(ctx, "s3scanner"), stdout_to=out)
         info(f"{NAME}: s3scanner -> {out}")

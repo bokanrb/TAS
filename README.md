@@ -8,6 +8,29 @@ A thin, modular recon and enumeration orchestrator. Each stage is a small wrappe
 
 > This tool is for authorized testing only. Test only assets you own or have explicit written permission to test. See `docs/SCOPE.md`.
 
+## Prerequisites
+
+Install these first. The installer checks for them and reports what is missing
+(`python install/install.py --check`).
+
+| Requirement | Why | Notes |
+|---|---|---|
+| Python 3.9+ | runs the orchestrator | macOS, Linux and Windows |
+| Go 1.21+ | builds the ProjectDiscovery suite and jsluice (12 tools via `go install`) | add the Go bin dir (`~/go/bin`, or `%USERPROFILE%\go\bin`) to PATH |
+| git | clones cloud_enum and fetches updates | |
+| pipx | isolated installs of the Python tools | optional, pip `--user` is the fallback |
+| A dir on PATH for binaries | release binaries (trufflehog, feroxbuster) install to `~/.local/bin` | make sure it is on PATH |
+
+Optional, only for specific stages:
+
+- **nmap** for the `portscan --nmap` service scan.
+- **Npcap** (Windows) or root (macOS/Linux) for naabu SYN scans. The default
+  connect scan needs neither.
+
+The installer pulls everything else: the ProjectDiscovery tools and jsluice via
+`go install`, trufflehog and feroxbuster as release binaries matched to your OS
+and CPU, and arjun, wafw00f, s3scanner and cloud_enum via pipx or pip.
+
 ## Install
 
 ```
@@ -16,6 +39,9 @@ A thin, modular recon and enumeration orchestrator. Each stage is a small wrappe
 # Windows
 powershell -ExecutionPolicy Bypass -File install\install.ps1
 ```
+
+Or run the cross platform installer directly: `python install/install.py`
+(`--check` for the preflight only, `--wordlists` or `--tools` to limit scope).
 
 Make sure your Go bin dir (`~/go/bin` or `%USERPROFILE%\go\bin`) is on PATH, then check:
 
