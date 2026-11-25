@@ -3,6 +3,9 @@ output/
 runs/
 *.log
 
+# Vendored third-party clones (installed as packages, not tracked here)
+install/vendor/
+
 # Local tool config holding API keys
 config/provider-config.yaml
 config/*.local.yaml
